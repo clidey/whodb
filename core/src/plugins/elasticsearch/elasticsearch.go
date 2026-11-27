@@ -213,13 +213,6 @@ func (p *ElasticSearchPlugin) StorageUnitExists(config *engine.PluginConfig, dat
 	return res.StatusCode == http.StatusOK, nil
 }
 
-func (p *ElasticSearchPlugin) FormatValue(val any) string {
-	if val == nil {
-		return ""
-	}
-	return fmt.Sprintf("%v", val)
-}
-
 func init() {
 	engine.RegisterPlugin(NewElasticSearchPlugin())
 }

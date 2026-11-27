@@ -231,64 +231,6 @@ func (b *BatchProcessor) InsertBatch(db *gorm.DB, schema, tableName string, reco
 	return nil
 }
 
-// ExportInBatches exports data in batches to avoid memory issues
-func (b *BatchProcessor) ExportInBatches(db *gorm.DB, schema, tableName string, columns []string, writer func([]map[string]any) error) error {
-	builder := b.plugin.CreateSQLBuilder(db)
-	fullTableName, err := builder.QualifiedTableName(schema, tableName)
-	if err != nil {
-		return err
-	}
-	query := builder.GetTableQuery(schema, tableName)
-	if len(columns) > 0 {
-		query = query.Select(columns)
-	}
-
-	offset := 0
-	totalExported := 0
-
-	for {
-		var batch []map[string]any
-
-		// Fetch batch
-		result := query.Limit(b.config.BatchSize).Offset(offset).Find(&batch)
-		if result.Error != nil {
-			return fmt.Errorf("failed to fetch batch at offset %d: %w", offset, result.Error)
-		}
-
-		// No more records
-		if len(batch) == 0 {
-			break
-		}
-
-		// Write batch
-		if err := writer(batch); err != nil {
-			return fmt.Errorf("failed to write batch at offset %d: %w", offset, err)
-		}
-
-		totalExported += len(batch)
-		offset += b.config.BatchSize
-
-		if b.config.LogProgress {
-			log.WithField("recordsExported", totalExported).
-				WithField("table", fullTableName).
-				Debug("Export progress")
-		}
-
-		// If we got less than BatchSize, we're done
-		if len(batch) < b.config.BatchSize {
-			break
-		}
-	}
-
-	if b.config.LogProgress {
-		log.WithField("table", fullTableName).
-			WithField("totalRecordsExported", totalExported).
-			Info("Export completed")
-	}
-
-	return nil
-}
-
 // BulkAddRows adds multiple rows using batch processing
 func (p *GormPlugin) BulkAddRows(config *engine.PluginConfig, schema string, storageUnit string, rows [][]engine.Record) (bool, error) {
 	return plugins.WithConnection(config, p.DB, func(db *gorm.DB) (bool, error) {

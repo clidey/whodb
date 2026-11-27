@@ -42,6 +42,8 @@ interface IExportProps {
     objectRef?: SourceObjectRefInput;
     hasSelectedRows: boolean;
     selectedRowsData?: Record<string, any>[];
+    /** The grid's columns, in display order, for the rows in selectedRowsData. */
+    selectedRowsColumns?: { name: string; type: string }[];
     checkedRowsCount: number;
     databaseType?: string;
     rawQuery?: string;
@@ -56,6 +58,7 @@ export const Export: FC<IExportProps> = ({
                                              objectRef,
                                              hasSelectedRows,
                                              selectedRowsData,
+                                             selectedRowsColumns,
                                              checkedRowsCount,
                                              databaseType,
                                              rawQuery,
@@ -111,6 +114,7 @@ export const Export: FC<IExportProps> = ({
         exportDelimiter,
         selectedRowsForExport,
         exportFormat,
+        selectedRowsColumns,
     );
 
     const handleExportConfirm = useCallback(async () => {
@@ -118,7 +122,9 @@ export const Export: FC<IExportProps> = ({
             await backendExport();
             onOpenChange(false);
         } catch (error: any) {
-            toast.error(error.message ?? t('exportFailed'));
+            // A download that breaks off mid-file surfaces as a browser network
+            // TypeError, whose message is not meant for users.
+            toast.error(error instanceof TypeError ? t('exportFailed') : (error.message ?? t('exportFailed')));
         }
     }, [backendExport, onOpenChange, t]);
 

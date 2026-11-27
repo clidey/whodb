@@ -591,7 +591,7 @@ func (s *DatabaseSession) IsAvailable(ctx context.Context) bool {
 }
 
 // ExportRows streams tabular rows for one source object.
-func (s *DatabaseSession) ExportRows(ctx context.Context, ref source.ObjectRef, writer func([]string) error, selectedRows []map[string]any) error {
+func (s *DatabaseSession) ExportRows(ctx context.Context, ref source.ObjectRef, writer source.ExportWriter, selection *source.ExportSelection) error {
 	if err := s.ensureObjectAction(ref.Kind, source.ActionViewRows); err != nil {
 		return err
 	}
@@ -599,7 +599,7 @@ func (s *DatabaseSession) ExportRows(ctx context.Context, ref source.ObjectRef, 
 	config := s.pluginConfig(ctx, &ref)
 	namespace := s.namespaceForRef(&ref)
 	name := objectName(ref)
-	return s.plugin.ExportData(config, namespace, name, writer, selectedRows)
+	return s.plugin.ExportData(config, namespace, name, writer, selection)
 }
 
 // ExportRowsNDJSON streams NDJSON rows for one source object.

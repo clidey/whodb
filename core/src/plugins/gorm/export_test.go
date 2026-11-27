@@ -18,22 +18,19 @@ package gorm_plugin
 
 import (
 	"path/filepath"
-	"sync/atomic"
+	"reflect"
 	"testing"
-	"time"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"github.com/clidey/whodb/core/src/engine"
+	"github.com/clidey/whodb/core/src/query"
 )
 
 type exportTestPlugin struct {
 	GormPlugin
-	db                     *gorm.DB
-	columnsRead            atomic.Int32
-	columnsUsedTransaction atomic.Bool
-	formatCalls            atomic.Int32
+	db *gorm.DB
 }
 
 func newExportTestPlugin(t *testing.T) *exportTestPlugin {
@@ -43,11 +40,14 @@ func newExportTestPlugin(t *testing.T) *exportTestPlugin {
 	if err != nil {
 		t.Fatalf("failed to open sqlite test database: %v", err)
 	}
-	if err := db.Exec(`CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY, customer_name TEXT NOT NULL)`).Error; err != nil {
-		t.Fatalf("failed to create orders table: %v", err)
-	}
-	if err := db.Exec(`INSERT INTO orders (customer_name) VALUES ('alice')`).Error; err != nil {
-		t.Fatalf("failed to seed orders table: %v", err)
+	for _, statement := range []string{
+		`CREATE TABLE orders (id INTEGER PRIMARY KEY, amount NUMERIC, customer_name TEXT, receipt BLOB)`,
+		`INSERT INTO orders VALUES (1, -1200.5, '=1+1', x'deadbeef')`,
+		`INSERT INTO orders VALUES (2, 3, NULL, NULL)`,
+	} {
+		if err := db.Exec(statement).Error; err != nil {
+			t.Fatalf("failed to seed orders table: %v", err)
+		}
 	}
 
 	plugin := &exportTestPlugin{db: db}
@@ -61,72 +61,76 @@ func (p *exportTestPlugin) DB(config *engine.PluginConfig) (*gorm.DB, error) {
 	return p.db, nil
 }
 
-func (p *exportTestPlugin) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {
-	p.columnsRead.Add(1)
-	if config != nil && config.Transaction != nil {
-		p.columnsUsedTransaction.Store(true)
-	}
-	return []engine.Column{
-		{Name: "id", Type: "INTEGER", IsPrimary: true},
-		{Name: "customer_name", Type: "TEXT", IsNullable: false},
-	}, nil
+type exportedRow struct {
+	values []string
+	text   []bool
 }
 
-func (p *exportTestPlugin) FormatValue(val any) string {
-	p.formatCalls.Add(1)
-	if ts, ok := val.(time.Time); ok {
-		return "OVERRIDE:" + ts.Format(time.RFC3339Nano)
+func collectExport(rows *[]exportedRow) engine.ExportWriter {
+	return func(row []string, text []bool) error {
+		*rows = append(*rows, exportedRow{values: append([]string(nil), row...), text: text})
+		return nil
 	}
-	return p.GormPlugin.FormatValue(val)
 }
 
-func TestExportDataUsesPluginColumnLookup(t *testing.T) {
+func TestExportDataMatchesGridRows(t *testing.T) {
 	plugin := newExportTestPlugin(t)
 	config := engine.NewPluginConfig(&engine.Credentials{Type: string(engine.DatabaseType_Postgres)})
 
-	var written [][]string
-	err := plugin.ExportData(config, "", "orders", func(row []string) error {
-		written = append(written, append([]string(nil), row...))
-		return nil
-	}, nil)
+	grid, err := plugin.GetRows(config, &engine.GetRowsRequest{StorageUnit: "orders", Sort: []*query.SortCondition{}, PageSize: 10})
 	if err != nil {
+		t.Fatalf("GetRows returned error: %v", err)
+	}
+
+	var exported []exportedRow
+	if err := plugin.ExportData(config, "", "orders", collectExport(&exported), nil); err != nil {
 		t.Fatalf("ExportData returned error: %v", err)
 	}
 
-	if plugin.columnsRead.Load() != 1 {
-		t.Fatalf("expected export to use plugin GetColumnsForTable exactly once, got %d", plugin.columnsRead.Load())
+	if len(exported) != len(grid.Rows)+1 {
+		t.Fatalf("expected a header and %d rows, got %#v", len(grid.Rows), exported)
 	}
-	if !plugin.columnsUsedTransaction.Load() {
-		t.Fatal("expected export column lookup to reuse the active connection")
+	for i, column := range grid.Columns {
+		if exported[0].values[i] != column.Name {
+			t.Fatalf("expected header %q at %d, got %#v", column.Name, i, exported[0].values)
+		}
 	}
-	if len(written) < 2 {
-		t.Fatalf("expected headers and at least one row, got %#v", written)
+	for i, row := range grid.Rows {
+		if !reflect.DeepEqual(exported[i+1].values, row) {
+			t.Fatalf("row %d: export %#v differs from grid %#v", i+1, exported[i+1].values, row)
+		}
 	}
-	if written[0][0] != "id" || written[0][1] != "customer_name" {
-		t.Fatalf("unexpected export headers: %#v", written[0])
+	if exported[1].values[1] != "-1200.5" || exported[1].values[3] != "0xdeadbeef" {
+		t.Fatalf("unexpected exported values: %#v", exported[1].values)
 	}
-	if written[1][1] != "alice" {
-		t.Fatalf("unexpected exported row: %#v", written[1])
+	// Numbers are typed values; text and undeclared types are free text.
+	if want := []bool{false, false, true, true}; !reflect.DeepEqual(exported[1].text, want) {
+		t.Fatalf("expected free-text flags %v, got %v", want, exported[1].text)
 	}
 }
 
-func TestExportDataUsesPluginFormatValueOverride(t *testing.T) {
+func TestExportDataWritesSelectionInGridOrder(t *testing.T) {
 	plugin := newExportTestPlugin(t)
-	createdAt := time.Date(2026, 4, 20, 10, 11, 12, 123456789, time.UTC)
+	selection := &engine.ExportSelection{
+		Columns: []engine.Column{{Name: "total", Type: "NUMERIC(12,2)"}, {Name: "customer", Type: "TEXT"}, {Name: "age", Type: "INT4"}},
+		Rows: []map[string]any{
+			{"customer": "=cmd", "age": "-3", "total": "-9.50"},
+			{"customer": "bob", "total": "1.00"},
+		},
+	}
 
-	var written [][]string
-	err := plugin.ExportData(nil, "", "", func(row []string) error {
-		written = append(written, append([]string(nil), row...))
-		return nil
-	}, []map[string]any{{"created_at": createdAt}})
-	if err != nil {
+	var exported []exportedRow
+	if err := plugin.ExportData(nil, "", "", collectExport(&exported), selection); err != nil {
 		t.Fatalf("ExportData returned error: %v", err)
 	}
 
-	if plugin.formatCalls.Load() == 0 {
-		t.Fatal("expected export to call the plugin FormatValue override")
+	want := [][]string{{"total", "customer", "age"}, {"-9.50", "=cmd", "-3"}, {"1.00", "bob", ""}}
+	for i, row := range want {
+		if !reflect.DeepEqual(exported[i].values, row) {
+			t.Fatalf("row %d: expected %#v, got %#v", i, row, exported[i].values)
+		}
 	}
-	if len(written) != 2 || written[1][0] != "OVERRIDE:"+createdAt.Format(time.RFC3339Nano) {
-		t.Fatalf("unexpected formatted export rows: %#v", written)
+	if wantText := []bool{false, true, false}; !reflect.DeepEqual(exported[1].text, wantText) {
+		t.Fatalf("expected free-text flags %v, got %v", wantText, exported[1].text)
 	}
 }

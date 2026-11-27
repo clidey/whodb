@@ -123,13 +123,6 @@ func TestFilterMemcachedRows(t *testing.T) {
 }
 
 func TestMemcachedMetadataAndHelpers(t *testing.T) {
-	plugin := &MemcachedPlugin{}
-	if got := plugin.FormatValue(nil); got != "" {
-		t.Fatalf("expected nil to format as empty string, got %q", got)
-	}
-	if got := plugin.FormatValue(42); got != "42" {
-		t.Fatalf("expected non-nil value to use fmt string, got %q", got)
-	}
 
 	metadata, ok := sourcecatalog.ResolveSessionMetadata(string(engine.DatabaseType_Memcached))
 	if !ok || metadata == nil {

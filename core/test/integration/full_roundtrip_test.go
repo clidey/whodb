@@ -157,7 +157,7 @@ func TestMongoCrudAndExport(t *testing.T) {
 	}
 
 	var exported [][]string
-	err = mongoTarget.plugin.ExportData(mongoTarget.config, mongoTarget.schema, collection, func(row []string) error {
+	err = mongoTarget.plugin.ExportData(mongoTarget.config, mongoTarget.schema, collection, func(row []string, _ []bool) error {
 		exported = append(exported, row)
 		return nil
 	}, nil)
@@ -426,7 +426,7 @@ func TestElasticsearchCRUDAndSearch(t *testing.T) {
 	}
 
 	var exported [][]string
-	if err := esPlugin.ExportData(esTarget.config, esTarget.schema, index, func(row []string) error {
+	if err := esPlugin.ExportData(esTarget.config, esTarget.schema, index, func(row []string, _ []bool) error {
 		exported = append(exported, row)
 		return nil
 	}, nil); err != nil && !strings.Contains(err.Error(), "index") {
@@ -443,10 +443,10 @@ func TestElasticsearchCRUDAndSearch(t *testing.T) {
 
 	var selected [][]string
 	selectedRows := []map[string]any{{"_id": "sel1", "title": "Selected", "count": 9}}
-	if err := esPlugin.ExportData(esTarget.config, esTarget.schema, index, func(row []string) error {
+	if err := esPlugin.ExportData(esTarget.config, esTarget.schema, index, func(row []string, _ []bool) error {
 		selected = append(selected, row)
 		return nil
-	}, selectedRows); err != nil {
+	}, &engine.ExportSelection{Rows: selectedRows}); err != nil {
 		t.Fatalf("elastic selected export failed: %v", err)
 	}
 	if len(selected) != 2 {

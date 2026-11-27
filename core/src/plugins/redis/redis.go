@@ -564,13 +564,6 @@ func evaluateRedisCondition(value, operator, target string) bool {
 	return false
 }
 
-func (p *RedisPlugin) FormatValue(val any) string {
-	if val == nil {
-		return ""
-	}
-	return fmt.Sprintf("%v", val)
-}
-
 func init() {
 	engine.RegisterPlugin(NewRedisPlugin())
 }

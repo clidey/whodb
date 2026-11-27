@@ -118,6 +118,7 @@ const DynamicExport: FC<{
     objectRef?: SourceObjectRefInput;
     hasSelectedRows: boolean;
     selectedRowsData?: Record<string, any>[];
+    selectedRowsColumns?: { name: string; type: string }[];
     checkedRowsCount: number;
     databaseType?: string;
     rawQuery?: string;
@@ -558,6 +559,9 @@ export const StorageUnitTable: FC<TableProps> = ({
         }
         return undefined;
     }, [hasSelectedRows, checked, rows, columns, rawQuery]);
+    const selectedRowsColumns = useMemo(() => {
+        return columns.map((name, idx) => ({ name, type: columnTypes?.[idx] ?? "" }));
+    }, [columns, columnTypes]);
 
     const openExport = useCallback((format?: 'csv' | 'excel' | 'ndjson', exportAll?: boolean) => {
         if (!isExportSupported) {
@@ -2020,6 +2024,7 @@ export const StorageUnitTable: FC<TableProps> = ({
                         objectRef={objectRef}
                         hasSelectedRows={hasSelectedRows}
                         selectedRowsData={selectedRowsData}
+                        selectedRowsColumns={selectedRowsColumns}
                         checkedRowsCount={checked.length}
                         databaseType={databaseType}
                         rawQuery={rawQuery}

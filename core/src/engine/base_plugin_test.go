@@ -92,16 +92,6 @@ func TestBasePluginWithTransactionCallsOperationDirectly(t *testing.T) {
 	}
 }
 
-func TestBasePluginFormatValue(t *testing.T) {
-	bp := &BasePlugin{}
-	if bp.FormatValue(42) != "42" {
-		t.Fatalf("FormatValue(42) should return \"42\", got %q", bp.FormatValue(42))
-	}
-	if bp.FormatValue("hello") != "hello" {
-		t.Fatalf("FormatValue(\"hello\") should return \"hello\", got %q", bp.FormatValue("hello"))
-	}
-}
-
 func TestBasePluginIsAvailableReturnsFalse(t *testing.T) {
 	bp := &BasePlugin{}
 	if bp.IsAvailable(context.Background(), nil) {

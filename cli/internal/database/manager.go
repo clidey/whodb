@@ -34,6 +34,7 @@ import (
 	tunnelpkg "github.com/clidey/whodb/cli/internal/ssh"
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src"
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/envconfig"
 	"github.com/clidey/whodb/core/src/llm"
@@ -1232,7 +1233,9 @@ func (m *Manager) ExportToCSV(schema, storageUnit, filename, delimiter string) e
 	writer.Comma = delimRune
 
 	// The first record the export writes is the header row
-	if _, err := m.ExportDataStream(schema, storageUnit, writer.Write); err != nil {
+	if _, err := m.ExportDataStream(schema, storageUnit, func(record []string, text []bool) error {
+		return writer.Write(common.EscapeFormulaRow(record, text))
+	}); err != nil {
 		_ = tmp.Close()
 		_ = os.Remove(tmpPath)
 		return fmt.Errorf("failed to fetch data: %w", err)
@@ -1265,8 +1268,10 @@ func (m *Manager) ExportToCSV(schema, storageUnit, filename, delimiter string) e
 }
 
 // ExportDataStream streams storage-unit data row by row via the plugin export
-// callback and returns the number of data rows written.
-func (m *Manager) ExportDataStream(schema, storageUnit string, writer func([]string) error) (int, error) {
+// callback and returns the number of data rows written. The writer receives the
+// values as the source formats them; CSV writers guard the cells marked as free
+// text with common.EscapeFormulaRow.
+func (m *Manager) ExportDataStream(schema, storageUnit string, writer source.ExportWriter) (int, error) {
 	start := time.Now()
 
 	if m.currentConnection == nil {
@@ -1293,13 +1298,13 @@ func (m *Manager) ExportDataStream(schema, storageUnit string, writer func([]str
 
 	headerWritten := false
 	rowCount := 0
-	err = exporter.ExportRows(context.Background(), ref, func(record []string) error {
+	err = exporter.ExportRows(context.Background(), ref, func(record []string, text []bool) error {
 		if headerWritten {
 			rowCount++
 		} else {
 			headerWritten = true
 		}
-		return writer(record)
+		return writer(record, text)
 	}, nil)
 	m.logOperation(fmt.Sprintf("ExportDataStream(%s.%s)", schema, storageUnit), start, rowCount, err)
 	if err != nil {
@@ -1333,7 +1338,7 @@ func (m *Manager) ExportToExcel(schema, storageUnit, filename string) error {
 
 	// The first record the export writes is the header row
 	sheetRow := 0
-	if _, err := m.ExportDataStream(schema, storageUnit, func(record []string) error {
+	if _, err := m.ExportDataStream(schema, storageUnit, func(record []string, _ []bool) error {
 		sheetRow++
 		for colIdx, value := range record {
 			cell, _ := excelize.CoordinatesToCellName(colIdx+1, sheetRow)

@@ -132,6 +132,8 @@ test.describe('Data Export', () => {
                 expect(postData.selectedRows).toBeDefined();
                 expect(Array.isArray(postData.selectedRows)).toBe(true);
                 expect(postData.selectedRows.length).toBeGreaterThan(0);
+                // The grid's column order and types travel with the rows
+                expect(postData.columns.map(column => column.name)).toEqual(Object.keys(postData.selectedRows[0]));
 
                 await expect(page.locator('[role="dialog"]')).not.toBeAttached();
             });

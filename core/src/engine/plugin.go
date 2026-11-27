@@ -86,8 +86,7 @@ type PluginFunctions interface {
 	GetGraph(config *PluginConfig, schema string) ([]GraphUnit, error)
 	RawExecute(config *PluginConfig, sql string, params ...any) (*GetRowsResult, error)
 	Chat(config *PluginConfig, schema string, previousConversation string, prompt string) ([]*ChatMessage, error)
-	ExportData(config *PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error
-	FormatValue(val any) string
+	ExportData(config *PluginConfig, schema string, storageUnit string, writer ExportWriter, selection *ExportSelection) error
 	GetColumnsForTable(config *PluginConfig, schema string, storageUnit string) ([]Column, error)
 
 	// MarkGeneratedColumns enriches columns with auto-increment and computed column flags

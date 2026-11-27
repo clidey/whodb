@@ -29,7 +29,15 @@ import (
 )
 
 // ExportData exports Redis data to tabular format
-func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
+func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer engine.ExportWriter, selection *engine.ExportSelection) error {
+	var selectedRows []map[string]any
+	if selection.HasRows() {
+		selectedRows = selection.Rows
+	}
+	// Index and score columns are numbers; every other column is stored text.
+	indexedText := []bool{false, true}
+	scoredText := []bool{false, true, false}
+
 	client, err := DB(config)
 	if err != nil {
 		return err
@@ -46,25 +54,25 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 	switch keyType {
 	case redisTypeString:
 		headers := []string{common.FormatCSVHeader(redisKeyValue, "string")}
-		if err := writer(headers); err != nil {
+		if err := writer(headers, nil); err != nil {
 			return err
 		}
 		val, err := client.Get(ctx, storageUnit).Result()
 		if err != nil {
 			return err
 		}
-		return writer([]string{val})
+		return writer([]string{val}, nil)
 
 	case redisTypeHash:
 		headers := []string{common.FormatCSVHeader("field", "string"), common.FormatCSVHeader(redisKeyValue, "string")}
-		if err := writer(headers); err != nil {
+		if err := writer(headers, nil); err != nil {
 			return err
 		}
 
 		// If selected rows provided, use them
 		if len(selectedRows) > 0 {
 			for _, row := range selectedRows {
-				if err := writer([]string{fmt.Sprintf("%v", row["field"]), fmt.Sprintf("%v", row[redisKeyValue])}); err != nil {
+				if err := writer([]string{fmt.Sprintf("%v", row["field"]), fmt.Sprintf("%v", row[redisKeyValue])}, nil); err != nil {
 					return err
 				}
 			}
@@ -81,7 +89,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		}
 		sort.Strings(fields)
 		for _, f := range fields {
-			if err := writer([]string{f, values[f]}); err != nil {
+			if err := writer([]string{f, values[f]}, nil); err != nil {
 				return err
 			}
 		}
@@ -89,13 +97,13 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 
 	case redisTypeList:
 		headers := []string{common.FormatCSVHeader("index", "string"), common.FormatCSVHeader(redisKeyValue, "string")}
-		if err := writer(headers); err != nil {
+		if err := writer(headers, nil); err != nil {
 			return err
 		}
 
 		if len(selectedRows) > 0 {
 			for _, row := range selectedRows {
-				if err := writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row[redisKeyValue])}); err != nil {
+				if err := writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row[redisKeyValue])}, indexedText); err != nil {
 					return err
 				}
 			}
@@ -107,7 +115,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 			return err
 		}
 		for i, v := range values {
-			if err := writer([]string{strconv.Itoa(i), v}); err != nil {
+			if err := writer([]string{strconv.Itoa(i), v}, indexedText); err != nil {
 				return err
 			}
 		}
@@ -115,13 +123,13 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 
 	case "set":
 		headers := []string{common.FormatCSVHeader("index", "string"), common.FormatCSVHeader(redisKeyValue, "string")}
-		if err := writer(headers); err != nil {
+		if err := writer(headers, nil); err != nil {
 			return err
 		}
 
 		if len(selectedRows) > 0 {
 			for _, row := range selectedRows {
-				if err := writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row[redisKeyValue])}); err != nil {
+				if err := writer([]string{fmt.Sprintf("%v", row["index"]), fmt.Sprintf("%v", row[redisKeyValue])}, indexedText); err != nil {
 					return err
 				}
 			}
@@ -134,7 +142,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 		}
 		sort.Strings(values)
 		for i, v := range values {
-			if err := writer([]string{strconv.Itoa(i), v}); err != nil {
+			if err := writer([]string{strconv.Itoa(i), v}, indexedText); err != nil {
 				return err
 			}
 		}
@@ -146,7 +154,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 			common.FormatCSVHeader("member", "string"),
 			common.FormatCSVHeader("score", "string"),
 		}
-		if err := writer(headers); err != nil {
+		if err := writer(headers, nil); err != nil {
 			return err
 		}
 
@@ -156,7 +164,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 					fmt.Sprintf("%v", row["index"]),
 					fmt.Sprintf("%v", row["member"]),
 					fmt.Sprintf("%v", row["score"]),
-				}); err != nil {
+				}, scoredText); err != nil {
 					return err
 				}
 			}
@@ -172,7 +180,7 @@ func (p *RedisPlugin) ExportData(config *engine.PluginConfig, schema string, sto
 				strconv.Itoa(i),
 				fmt.Sprintf("%v", m.Member),
 				fmt.Sprintf("%.2f", m.Score),
-			}); err != nil {
+			}, scoredText); err != nil {
 				return err
 			}
 		}

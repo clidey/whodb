@@ -26,21 +26,23 @@ import (
 )
 
 // ExportData exports a Memcached item to tabular format.
-func (p *MemcachedPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
+func (p *MemcachedPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer engine.ExportWriter, selection *engine.ExportSelection) error {
+	// The value is stored text; the flags column is a number.
+	text := []bool{true, false}
 	headers := []string{
 		common.FormatCSVHeader("Value", "string"),
 		common.FormatCSVHeader("Flags", "uint32"),
 	}
-	if err := writer(headers); err != nil {
+	if err := writer(headers, nil); err != nil {
 		return err
 	}
 
-	if len(selectedRows) > 0 {
-		for _, row := range selectedRows {
+	if selection.HasRows() {
+		for _, row := range selection.Rows {
 			if err := writer([]string{
 				fmt.Sprintf("%v", row["Value"]),
 				fmt.Sprintf("%v", row["Flags"]),
-			}); err != nil {
+			}, text); err != nil {
 				return err
 			}
 		}
@@ -64,7 +66,7 @@ func (p *MemcachedPlugin) ExportData(config *engine.PluginConfig, schema string,
 	return writer([]string{
 		string(item.Value),
 		strconv.FormatUint(uint64(item.Flags), 10),
-	})
+	}, text)
 }
 
 // ExportDataNDJSON streams a Memcached item as NDJSON.

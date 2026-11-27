@@ -23,7 +23,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -84,8 +83,6 @@ type GormPluginFunctions interface {
 	ConvertStringValue(value, columnType string, isNullable bool) (any, error)
 	ConvertRawToRows(raw *sql.Rows) (*engine.GetRowsResult, error)
 	ConvertRecordValuesToMap(values []engine.Record) (map[string]any, error)
-	FormatValue(val any) string
-	FormatTimeForExport(value time.Time) string
 
 	// CreateSQLBuilder creates a SQL builder instance - can be overridden by specific plugins
 	CreateSQLBuilder(db *gorm.DB) SQLBuilderInterface

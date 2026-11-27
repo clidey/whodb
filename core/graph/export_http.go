@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sort"
 	"strings"
 
 	"github.com/xuri/excelize/v2"
@@ -31,6 +30,7 @@ import (
 	"github.com/clidey/whodb/core/graph/model"
 	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/source"
+	"github.com/clidey/whodb/core/src/sourcecatalog"
 )
 
 const (
@@ -80,6 +80,12 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 		Delimiter    string                      `json:"delimiter,omitempty"`
 		Format       string                      `json:"format,omitempty"`
 		SelectedRows []map[string]any            `json:"selectedRows,omitempty"`
+		// Columns lists the selected rows' columns in grid order with the
+		// types the grid showed, so the export keeps both.
+		Columns []struct {
+			Name string `json:"name"`
+			Type string `json:"type"`
+		} `json:"columns,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -128,14 +134,33 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var selection *source.ExportSelection
+	if len(req.SelectedRows) > 0 {
+		selection = &source.ExportSelection{Rows: req.SelectedRows}
+		for _, column := range req.Columns {
+			selection.Columns = append(selection.Columns, source.Column{Name: column.Name, Type: column.Type})
+		}
+	}
+
 	if resolvedRef == nil {
-		switch format {
-		case "excel":
-			handleSelectedRowsExcelExport(w, fileBaseName, req.SelectedRows)
-		case "ndjson":
+		if format == "ndjson" {
 			handleSelectedRowsNDJSONExport(w, fileBaseName, req.SelectedRows)
-		default:
-			handleSelectedRowsCSVExport(w, fileBaseName, delimiter, req.SelectedRows)
+			return
+		}
+
+		spec, _, err := getSourceSpecForContext(r.Context())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		metadata, _ := sourcecatalog.ResolveSessionMetadata(spec.ID, spec.Connector)
+		rows := func(writer source.ExportWriter) error {
+			return selection.Write(writer, selection.FreeTextColumns(metadata))
+		}
+		if format == "excel" {
+			handleExcelExport(w, fileBaseName, rows)
+		} else {
+			handleCSVExport(w, r, fileBaseName, delimiter, rows)
 		}
 		return
 	}
@@ -156,10 +181,13 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Export not supported for this source", http.StatusBadRequest)
 		return
 	}
+	rows := func(writer source.ExportWriter) error {
+		return exporter.ExportRows(r.Context(), *resolvedRef, writer, selection)
+	}
 
 	switch format {
 	case "excel":
-		handleExcelExport(r.Context(), w, exporter, *resolvedRef, fileBaseName, req.SelectedRows)
+		handleExcelExport(w, fileBaseName, rows)
 	case "ndjson":
 		ndjsonExporter, ok := source.AsNDJSONExporter(scope, session)
 		if !ok {
@@ -168,13 +196,25 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 		}
 		handleNDJSONExport(r.Context(), w, ndjsonExporter, *resolvedRef, fileBaseName, req.SelectedRows)
 	default:
-		handleCSVExport(r.Context(), w, exporter, *resolvedRef, fileBaseName, delimiter, req.SelectedRows)
+		handleCSVExport(w, r, fileBaseName, delimiter, rows)
 	}
 }
 
-func handleCSVExport(ctx context.Context, w http.ResponseWriter, exporter source.TabularExporter, ref source.ObjectRef, fileBaseName string, delimiter string, selectedRows []map[string]any) {
-	delimRune := rune(delimiter[0])
+// exportRows streams an export's header and rows into the given writer.
+type exportRows func(writer source.ExportWriter) error
 
+// trackingResponseWriter records whether any of the response has been sent.
+type trackingResponseWriter struct {
+	http.ResponseWriter
+	wrote bool
+}
+
+func (t *trackingResponseWriter) Write(data []byte) (int, error) {
+	t.wrote = true
+	return t.ResponseWriter.Write(data)
+}
+
+func handleCSVExport(w http.ResponseWriter, r *http.Request, fileBaseName string, delimiter string, rows exportRows) {
 	filename := fileBaseName + ".csv"
 	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
@@ -182,15 +222,13 @@ func handleCSVExport(ctx context.Context, w http.ResponseWriter, exporter source
 	w.Header().Set("Pragma", "no-cache")
 	w.Header().Set("Expires", "0")
 
-	csvWriter := csv.NewWriter(w)
-	csvWriter.Comma = delimRune // Use user-specified delimiter
-	defer csvWriter.Flush()
+	response := &trackingResponseWriter{ResponseWriter: w}
+	csvWriter := csv.NewWriter(response)
+	csvWriter.Comma = rune(delimiter[0])
 
-	// Track if we've written anything
 	rowsWritten := 0
-
-	writerFunc := func(row []string) error {
-		if err := csvWriter.Write(row); err != nil {
+	writerFunc := func(row []string, text []bool) error {
+		if err := csvWriter.Write(common.EscapeFormulaRow(row, text)); err != nil {
 			return err
 		}
 		rowsWritten++
@@ -205,17 +243,35 @@ func handleCSVExport(ctx context.Context, w http.ResponseWriter, exporter source
 		return nil
 	}
 
-	// Export rows (all or selected) using the unified method
-	err := exporter.ExportRows(ctx, ref, writerFunc, selectedRows)
-	if err != nil {
-		if rowsWritten == 0 {
-			http.Error(w, "Export failed. Please check your file and try again.", http.StatusInternalServerError)
-			return
+	err := rows(writerFunc)
+	if err == nil {
+		csvWriter.Flush()
+		err = csvWriter.Error()
+	}
+	if err == nil {
+		return
+	}
+
+	if !response.wrote {
+		for _, header := range []string{"Content-Disposition", "Cache-Control", "Pragma", "Expires"} {
+			w.Header().Del(header)
 		}
+		http.Error(w, "Export failed. Please check your file and try again.", http.StatusInternalServerError)
+		return
+	}
+
+	// Part of the file is already on the wire with a 200 status. Dropping the
+	// connection is the only way left to tell the client the file is
+	// incomplete. The desktop webview handler has no connection to drop and
+	// does not recover panics, so there the response just ends.
+	if r.Context().Value(http.ServerContextKey) != nil {
+		panic(http.ErrAbortHandler)
 	}
 }
 
-func handleExcelExport(ctx context.Context, w http.ResponseWriter, exporter source.TabularExporter, ref source.ObjectRef, fileBaseName string, selectedRows []map[string]any) {
+// handleExcelExport writes every value as a plain string cell. Spreadsheets
+// never evaluate string cells, so values need no formula guard here.
+func handleExcelExport(w http.ResponseWriter, fileBaseName string, rows exportRows) {
 	f := excelize.NewFile()
 	defer func() { _ = f.Close() }()
 
@@ -238,7 +294,7 @@ func handleExcelExport(ctx context.Context, w http.ResponseWriter, exporter sour
 	rowCount := 0
 	currentRow := 1
 
-	writerFunc := func(row []string) error {
+	writerFunc := func(row []string, _ []bool) error {
 		if rowCount >= MaxExcelRows {
 			return fmt.Errorf("excel export limit exceeded: maximum %d rows allowed", MaxExcelRows)
 		}
@@ -282,9 +338,7 @@ func handleExcelExport(ctx context.Context, w http.ResponseWriter, exporter sour
 		return nil
 	}
 
-	// Export rows using the plugin
-	err = exporter.ExportRows(ctx, ref, writerFunc, selectedRows)
-	if err != nil {
+	if err := rows(writerFunc); err != nil {
 		http.Error(w, "Export failed", http.StatusInternalServerError)
 		return
 	}
@@ -344,107 +398,6 @@ func handleNDJSONExport(ctx context.Context, w http.ResponseWriter, exporter sou
 	}
 }
 
-func handleSelectedRowsCSVExport(w http.ResponseWriter, fileBaseName string, delimiter string, selectedRows []map[string]any) {
-	headers, rows := selectedRowsTable(selectedRows)
-	if len(headers) == 0 {
-		http.Error(w, "Missing required parameters", http.StatusBadRequest)
-		return
-	}
-
-	delimRune := rune(delimiter[0])
-	filename := fileBaseName + ".csv"
-	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
-	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-	w.Header().Set("Pragma", "no-cache")
-	w.Header().Set("Expires", "0")
-
-	csvWriter := csv.NewWriter(w)
-	csvWriter.Comma = delimRune
-	defer csvWriter.Flush()
-
-	if err := csvWriter.Write(headers); err != nil {
-		http.Error(w, "Export failed. Please check your file and try again.", http.StatusInternalServerError)
-		return
-	}
-	for _, row := range rows {
-		if err := csvWriter.Write(row); err != nil {
-			http.Error(w, "Export failed. Please check your file and try again.", http.StatusInternalServerError)
-			return
-		}
-	}
-}
-
-func handleSelectedRowsExcelExport(w http.ResponseWriter, fileBaseName string, selectedRows []map[string]any) {
-	headers, rows := selectedRowsTable(selectedRows)
-	if len(headers) == 0 {
-		http.Error(w, "Missing required parameters", http.StatusBadRequest)
-		return
-	}
-
-	f := excelize.NewFile()
-	defer func() { _ = f.Close() }()
-
-	sheetName := "Data"
-	index, err := f.NewSheet(sheetName)
-	if err != nil {
-		http.Error(w, "Failed to create Excel sheet", http.StatusInternalServerError)
-		return
-	}
-	f.SetActiveSheet(index)
-	_ = f.DeleteSheet("Sheet1")
-
-	streamWriter, err := f.NewStreamWriter(sheetName)
-	if err != nil {
-		http.Error(w, "Failed to create Excel stream writer", http.StatusInternalServerError)
-		return
-	}
-
-	headerCells := make([]any, len(headers))
-	styleID, _ := f.NewStyle(&excelize.Style{
-		Font: &excelize.Font{Bold: true},
-		Fill: excelize.Fill{
-			Type:    "pattern",
-			Color:   []string{"#E0E0E0"},
-			Pattern: 1,
-		},
-	})
-	for i, header := range headers {
-		headerCells[i] = excelize.Cell{StyleID: styleID, Value: header}
-	}
-	if err := streamWriter.SetRow("A1", headerCells); err != nil {
-		http.Error(w, "Export failed", http.StatusInternalServerError)
-		return
-	}
-
-	for rowIndex, row := range rows {
-		cells := make([]any, len(row))
-		for i, value := range row {
-			cells[i] = value
-		}
-		cell, _ := excelize.CoordinatesToCellName(1, rowIndex+2)
-		if err := streamWriter.SetRow(cell, cells); err != nil {
-			http.Error(w, "Export failed", http.StatusInternalServerError)
-			return
-		}
-	}
-	if err := streamWriter.Flush(); err != nil {
-		http.Error(w, "Failed to flush Excel data", http.StatusInternalServerError)
-		return
-	}
-
-	filename := fileBaseName + ".xlsx"
-	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
-	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-	w.Header().Set("Pragma", "no-cache")
-	w.Header().Set("Expires", "0")
-
-	if err := f.Write(w); err != nil {
-		http.Error(w, "Failed to generate Excel file", http.StatusInternalServerError)
-	}
-}
-
 func handleSelectedRowsNDJSONExport(w http.ResponseWriter, fileBaseName string, selectedRows []map[string]any) {
 	filename := fileBaseName + ".ndjson"
 
@@ -464,47 +417,5 @@ func handleSelectedRowsNDJSONExport(w http.ResponseWriter, fileBaseName string, 
 			http.Error(w, "Export failed. Please try again.", http.StatusInternalServerError)
 			return
 		}
-	}
-}
-
-func selectedRowsTable(selectedRows []map[string]any) ([]string, [][]string) {
-	if len(selectedRows) == 0 {
-		return nil, nil
-	}
-
-	headerSet := map[string]bool{}
-	for _, row := range selectedRows {
-		for key := range row {
-			headerSet[key] = true
-		}
-	}
-
-	headers := make([]string, 0, len(headerSet))
-	for key := range headerSet {
-		headers = append(headers, key)
-	}
-	sort.Strings(headers)
-
-	rows := make([][]string, 0, len(selectedRows))
-	for _, row := range selectedRows {
-		values := make([]string, len(headers))
-		for i, header := range headers {
-			values[i] = formatSelectedRowValue(row[header])
-		}
-		rows = append(rows, values)
-	}
-	return headers, rows
-}
-
-func formatSelectedRowValue(value any) string {
-	if value == nil {
-		return ""
-	}
-
-	switch typed := value.(type) {
-	case string:
-		return common.EscapeFormula(typed)
-	default:
-		return common.EscapeFormula(fmt.Sprintf("%v", typed))
 	}
 }

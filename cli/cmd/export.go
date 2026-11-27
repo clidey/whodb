@@ -28,6 +28,7 @@ import (
 	dbmgr "github.com/clidey/whodb/cli/internal/database"
 	"github.com/clidey/whodb/cli/pkg/analytics"
 	"github.com/clidey/whodb/cli/pkg/output"
+	"github.com/clidey/whodb/core/src/common"
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/spf13/cobra"
 )
@@ -343,7 +344,9 @@ func exportTableToCSVStream(mgr *dbmgr.Manager, schema, table, filename, delimit
 	}
 	defer file.Abort()
 
-	if _, err := mgr.ExportDataStream(schema, table, file.Write); err != nil {
+	if _, err := mgr.ExportDataStream(schema, table, func(record []string, text []bool) error {
+		return file.Write(common.EscapeFormulaRow(record, text))
+	}); err != nil {
 		return err
 	}
 	return file.Close()

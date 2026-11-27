@@ -243,7 +243,7 @@ func TestSeededSQLRuntimeSmoke(t *testing.T) {
 			}
 
 			var exported [][]string
-			if err := target.plugin.ExportData(target.config, tc.schema, tc.sampleTable, func(row []string) error {
+			if err := target.plugin.ExportData(target.config, tc.schema, tc.sampleTable, func(row []string, _ []bool) error {
 				copyRow := append([]string(nil), row...)
 				exported = append(exported, copyRow)
 				return nil
@@ -323,7 +323,7 @@ func TestClickHouseMutationRuntime(t *testing.T) {
 	}
 
 	var exported [][]string
-	if err := target.plugin.ExportData(target.config, target.schema, table, func(row []string) error {
+	if err := target.plugin.ExportData(target.config, target.schema, table, func(row []string, _ []bool) error {
 		exported = append(exported, append([]string(nil), row...))
 		return nil
 	}, nil); err != nil {

@@ -19,7 +19,6 @@ package engine
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/clidey/whodb/core/src/query"
 )
@@ -100,12 +99,8 @@ func (b *BasePlugin) Chat(_ *PluginConfig, _ string, _ string, _ string) ([]*Cha
 	return nil, errors.ErrUnsupported
 }
 
-func (b *BasePlugin) ExportData(_ *PluginConfig, _ string, _ string, _ func([]string) error, _ []map[string]any) error {
+func (b *BasePlugin) ExportData(_ *PluginConfig, _ string, _ string, _ ExportWriter, _ *ExportSelection) error {
 	return errors.ErrUnsupported
-}
-
-func (b *BasePlugin) FormatValue(val any) string {
-	return fmt.Sprintf("%v", val)
 }
 
 func (b *BasePlugin) GetColumnsForTable(_ *PluginConfig, _ string, _ string) ([]Column, error) {

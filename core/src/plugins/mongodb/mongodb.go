@@ -18,7 +18,6 @@ package mongodb
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -195,13 +194,6 @@ func (p *MongoDBPlugin) StorageUnitExists(config *engine.PluginConfig, database 
 		return false, err
 	}
 	return len(names) > 0, nil
-}
-
-func (p *MongoDBPlugin) FormatValue(val any) string {
-	if val == nil {
-		return ""
-	}
-	return fmt.Sprintf("%v", val)
 }
 
 // GetColumnConstraints retrieves MongoDB schema validation rules and maps them to the constraint format

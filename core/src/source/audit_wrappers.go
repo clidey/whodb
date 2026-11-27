@@ -679,11 +679,15 @@ type auditedTabularExporter struct {
 	next  TabularExporter
 }
 
-func (a auditedTabularExporter) ExportRows(ctx context.Context, ref ObjectRef, writer func([]string) error, selectedRows []map[string]any) error {
+func (a auditedTabularExporter) ExportRows(ctx context.Context, ref ObjectRef, writer ExportWriter, selection *ExportSelection) error {
 	start := time.Now()
-	err := a.next.ExportRows(ctx, ref, writer, selectedRows)
+	err := a.next.ExportRows(ctx, ref, writer, selection)
 	details := objectRefDetails(&ref)
-	details["selected_row_count"] = len(selectedRows)
+	selectedRowCount := 0
+	if selection != nil {
+		selectedRowCount = len(selection.Rows)
+	}
+	details["selected_row_count"] = selectedRowCount
 	a.scope.record(ctx, "source.export_rows", start, err, details)
 	return err
 }

@@ -70,6 +70,7 @@ var PostgresTypeDefinitions = []engine.TypeDefinition{
 	{ID: "DATE", Label: "date", Category: engine.TypeCategoryDatetime},
 	{ID: "TIME", Label: "time", Category: engine.TypeCategoryDatetime},
 	{ID: "TIME WITH TIME ZONE", Label: "timetz", Category: engine.TypeCategoryDatetime},
+	{ID: "INTERVAL", Label: "interval", Category: engine.TypeCategoryDatetime},
 	{ID: typeBoolean, Label: "boolean", Category: engine.TypeCategoryBoolean},
 	{ID: "JSON", Label: "json", Category: engine.TypeCategoryJSON},
 	{ID: "JSONB", Label: "jsonb", Category: engine.TypeCategoryJSON},

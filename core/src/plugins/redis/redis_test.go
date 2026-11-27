@@ -105,13 +105,6 @@ func TestRedisFilterHelpers(t *testing.T) {
 func TestRedisMetadataFormattingAndSSLStatus(t *testing.T) {
 	plugin := &RedisPlugin{}
 
-	if got := plugin.FormatValue(nil); got != "" {
-		t.Fatalf("expected nil values to format as empty strings, got %q", got)
-	}
-	if got := plugin.FormatValue(42); got != "42" {
-		t.Fatalf("expected values to be stringified, got %q", got)
-	}
-
 	metadata, ok := sourcecatalog.ResolveSessionMetadata(string(engine.DatabaseType_Redis))
 	if !ok || metadata == nil {
 		t.Fatalf("expected redis metadata, got %#v", metadata)

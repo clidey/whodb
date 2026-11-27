@@ -20,7 +20,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/clidey/whodb/core/src/common"
@@ -29,46 +28,10 @@ import (
 )
 
 // ExportData exports ElasticSearch index data to tabular format
-func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
-	// If selected rows provided, export only those
-	if len(selectedRows) > 0 {
-		fieldSet := make(map[string]bool)
-		for _, row := range selectedRows {
-			for k := range row {
-				fieldSet[k] = true
-			}
-		}
-
-		fieldNames := make([]string, 0, len(fieldSet))
-		for field := range fieldSet {
-			fieldNames = append(fieldNames, field)
-		}
-		sort.Strings(fieldNames)
-
-		// Write headers
-		headers := make([]string, len(fieldNames))
-		for i, field := range fieldNames {
-			headers[i] = common.FormatCSVHeader(field, "JSON")
-		}
-		if err := writer(headers); err != nil {
-			return fmt.Errorf("failed to write headers: %w", err)
-		}
-
-		// Write rows
-		for _, row := range selectedRows {
-			rowData := make([]string, len(fieldNames))
-			for i, field := range fieldNames {
-				if val, exists := row[field]; exists {
-					rowData[i] = p.formatElasticValue(val)
-				} else {
-					rowData[i] = ""
-				}
-			}
-			if err := writer(rowData); err != nil {
-				return fmt.Errorf("failed to write row: %w", err)
-			}
-		}
-		return nil
+func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer engine.ExportWriter, selection *engine.ExportSelection) error {
+	// Selected rows are the grid's own cells, so they are written as they are.
+	if selection.HasRows() {
+		return selection.Write(writer, nil)
 	}
 	db, err := DB(config)
 	if err != nil {
@@ -100,7 +63,7 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 	for i, field := range fieldNames {
 		headers[i] = common.FormatCSVHeader(field, "JSON")
 	}
-	if err := writer(headers); err != nil {
+	if err := writer(headers, nil); err != nil {
 		log.WithError(err).WithField("storageUnit", storageUnit).Error("Failed to write CSV headers during ElasticSearch export")
 		return fmt.Errorf("failed to write headers: %w", err)
 	}
@@ -145,14 +108,13 @@ func (p *ElasticSearchPlugin) ExportData(config *engine.PluginConfig, schema str
 			}
 
 			row := make([]string, len(fieldNames))
+			text := make([]bool, len(fieldNames))
 			for i, field := range fieldNames {
 				if val, exists := p.getNestedValue(doc, field); exists {
-					row[i] = p.formatElasticValue(val)
-				} else {
-					row[i] = ""
+					row[i], text[i] = formatElasticValue(val)
 				}
 			}
-			if err := writer(row); err != nil {
+			if err := writer(row, text); err != nil {
 				log.WithError(err).WithField("storageUnit", storageUnit).WithField("rowCount", rowCount).Error("Failed to write row during ElasticSearch export")
 				return fmt.Errorf("failed to write row: %w", err)
 			}
@@ -337,26 +299,21 @@ func (p *ElasticSearchPlugin) getNestedValue(doc map[string]any, field string) (
 	return nil, false
 }
 
-func (p *ElasticSearchPlugin) formatElasticValue(val any) string {
-	if val == nil {
-		return ""
-	}
-
-	var strVal string
+// formatElasticValue renders one document field the way the grid's document
+// JSON shows it, and reports whether it is free text. Strings are written
+// bare; every other value is its JSON.
+func formatElasticValue(val any) (string, bool) {
 	switch v := val.(type) {
+	case nil:
+		return "", false
 	case string:
-		strVal = v
-	case []any, map[string]any:
-		data, err := json.Marshal(v)
-		if err != nil {
-			log.WithError(err).Error("Failed to marshal ElasticSearch value to JSON during export formatting")
-			strVal = fmt.Sprintf("%v", v)
-		} else {
-			strVal = string(data)
-		}
-	default:
-		strVal = fmt.Sprintf("%v", v)
+		return v, true
 	}
 
-	return common.EscapeFormula(strVal)
+	data, err := json.Marshal(val)
+	if err != nil {
+		log.WithError(err).Error("Failed to marshal ElasticSearch value to JSON during export formatting")
+		return fmt.Sprintf("%v", val), true
+	}
+	return string(data), false
 }

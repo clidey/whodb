@@ -18,7 +18,6 @@ package testutil
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/clidey/whodb/core/src/engine"
 	"github.com/clidey/whodb/core/src/query"
@@ -47,8 +46,7 @@ type PluginMock struct {
 	GetGraphFunc             func(*engine.PluginConfig, string) ([]engine.GraphUnit, error)
 	RawExecuteFunc           func(*engine.PluginConfig, string, ...any) (*engine.GetRowsResult, error)
 	ChatFunc                 func(*engine.PluginConfig, string, string, string) ([]*engine.ChatMessage, error)
-	ExportDataFunc           func(*engine.PluginConfig, string, string, func([]string) error, []map[string]any) error
-	FormatValueFunc          func(any) string
+	ExportDataFunc           func(*engine.PluginConfig, string, string, engine.ExportWriter, *engine.ExportSelection) error
 	GetColumnsForTableFunc   func(*engine.PluginConfig, string, string) ([]engine.Column, error)
 	MarkGeneratedColumnsFunc func(*engine.PluginConfig, string, string, []engine.Column) error
 	GetColumnConstraintsFunc func(*engine.PluginConfig, string, string) (map[string]map[string]any, error)
@@ -196,18 +194,11 @@ func (m *PluginMock) Chat(config *engine.PluginConfig, schema string, previousCo
 	return nil, nil
 }
 
-func (m *PluginMock) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
+func (m *PluginMock) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer engine.ExportWriter, selection *engine.ExportSelection) error {
 	if m.ExportDataFunc != nil {
-		return m.ExportDataFunc(config, schema, storageUnit, writer, selectedRows)
+		return m.ExportDataFunc(config, schema, storageUnit, writer, selection)
 	}
 	return nil
-}
-
-func (m *PluginMock) FormatValue(val any) string {
-	if m.FormatValueFunc != nil {
-		return m.FormatValueFunc(val)
-	}
-	return fmt.Sprint(val)
 }
 
 func (m *PluginMock) GetColumnsForTable(config *engine.PluginConfig, schema string, storageUnit string) ([]engine.Column, error) {

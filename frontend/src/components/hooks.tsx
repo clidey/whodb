@@ -31,7 +31,8 @@ export const useExportToCSV = (
     selectedOnly: boolean = false,
     delimiter: string = ',',
     selectedRows?: Record<string, any>[],
-    format: 'csv' | 'excel' | 'ndjson' = 'csv'
+    format: 'csv' | 'excel' | 'ndjson' = 'csv',
+    selectedColumns?: { name: string; type: string }[],
 ) => {
     return useCallback(async () => {
         // Prepare request body
@@ -51,6 +52,9 @@ export const useExportToCSV = (
             console.warn(`Exporting ${selectedRows.length} rows. Large selections may be slow.`);
           }
           requestBody.selectedRows = selectedRows;
+          // Row objects carry no order, so the grid's columns and their types
+          // go along to keep both in the exported file.
+          requestBody.columns = selectedColumns;
         }
 
         // Use backend export endpoint for full data export
@@ -111,5 +115,5 @@ export const useExportToCSV = (
             window.URL.revokeObjectURL(downloadUrl);
           }, 100);
         }
-    }, [objectRef, fileBaseName, selectedOnly, delimiter, selectedRows, format]);
+    }, [objectRef, fileBaseName, selectedOnly, delimiter, selectedRows, format, selectedColumns]);
 };

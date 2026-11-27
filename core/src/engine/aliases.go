@@ -31,6 +31,12 @@ type ExternalModel = source.ExternalModel
 // Column aliases the source-owned column type for compatibility.
 type Column = source.Column
 
+// ExportWriter aliases the source-owned export row writer.
+type ExportWriter = source.ExportWriter
+
+// ExportSelection aliases the source-owned export row selection.
+type ExportSelection = source.ExportSelection
+
 // FieldConstraints aliases the source-owned normalized field constraints type.
 type FieldConstraints = source.FieldConstraints
 

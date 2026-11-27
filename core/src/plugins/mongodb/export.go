@@ -21,8 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"strconv"
-	"time"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -34,48 +33,10 @@ import (
 )
 
 // ExportData exports MongoDB collection data to tabular format
-func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer func([]string) error, selectedRows []map[string]any) error {
-	// If selected rows are provided, export only those
-	if len(selectedRows) > 0 {
-		// Extract field names from selected rows
-		fieldSet := make(map[string]bool)
-		for _, row := range selectedRows {
-			for k := range row {
-				fieldSet[k] = true
-			}
-		}
-
-		// Convert to sorted slice
-		fieldNames := make([]string, 0, len(fieldSet))
-		for field := range fieldSet {
-			fieldNames = append(fieldNames, field)
-		}
-		sort.Strings(fieldNames)
-
-		// Write headers
-		headers := make([]string, len(fieldNames))
-		for i, field := range fieldNames {
-			headers[i] = common.FormatCSVHeader(field, "BSON")
-		}
-		if err := writer(headers); err != nil {
-			return fmt.Errorf("failed to write headers: %w", err)
-		}
-
-		// Write selected rows
-		for _, row := range selectedRows {
-			rowData := make([]string, len(fieldNames))
-			for i, field := range fieldNames {
-				if val, exists := row[field]; exists {
-					rowData[i] = p.formatBSONValue(val)
-				} else {
-					rowData[i] = ""
-				}
-			}
-			if err := writer(rowData); err != nil {
-				return fmt.Errorf("failed to write row: %w", err)
-			}
-		}
-		return nil
+func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, storageUnit string, writer engine.ExportWriter, selection *engine.ExportSelection) error {
+	// Selected rows are the grid's own cells, so they are written as they are.
+	if selection.HasRows() {
+		return selection.Write(writer, nil)
 	}
 	client, err := DB(config)
 	if err != nil {
@@ -106,7 +67,7 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 	for i, field := range fieldNames {
 		headers[i] = common.FormatCSVHeader(field, "BSON")
 	}
-	if err := writer(headers); err != nil {
+	if err := writer(headers, nil); err != nil {
 		log.WithError(err).WithFields(map[string]any{
 			"hostname":    config.Credentials.Hostname,
 			"schema":      schema,
@@ -142,15 +103,14 @@ func (p *MongoDBPlugin) ExportData(config *engine.PluginConfig, schema string, s
 		}
 
 		row := make([]string, len(fieldNames))
+		text := make([]bool, len(fieldNames))
 		for i, field := range fieldNames {
 			if val, exists := doc[field]; exists {
-				row[i] = p.formatBSONValue(val)
-			} else {
-				row[i] = ""
+				row[i], text[i] = formatBSONValue(val)
 			}
 		}
 
-		if err := writer(row); err != nil {
+		if err := writer(row, text); err != nil {
 			log.WithError(err).WithFields(map[string]any{
 				"hostname":    config.Credentials.Hostname,
 				"schema":      schema,
@@ -239,6 +199,7 @@ func (p *MongoDBPlugin) getCollectionFields(collection *mongo.Collection) ([]str
 	for field := range fieldSet {
 		fields = append(fields, field)
 	}
+	sort.Strings(fields)
 
 	// Ensure _id is first if present
 	for i, field := range fields {
@@ -251,80 +212,36 @@ func (p *MongoDBPlugin) getCollectionFields(collection *mongo.Collection) ([]str
 	return fields, nil
 }
 
-func (p *MongoDBPlugin) formatBSONValue(val any) string {
-	if val == nil {
-		return ""
-	}
-
-	var strVal string
+// formatBSONValue renders one document field the way the grid's document JSON
+// shows it, and reports whether it is free text. Strings are written bare;
+// ObjectIDs, dates and decimals are unwrapped from their one-key Extended JSON
+// form; everything else is the field's Extended JSON.
+func formatBSONValue(val any) (string, bool) {
 	switch v := val.(type) {
+	case nil:
+		return "", false
 	case string:
-		strVal = v
-	case bool:
-		strVal = strconv.FormatBool(v)
-	case int, int8, int16, int32, int64:
-		strVal = fmt.Sprintf("%d", v)
-	case uint, uint8, uint16, uint32, uint64:
-		strVal = fmt.Sprintf("%d", v)
-	case float32, float64:
-		strVal = fmt.Sprintf("%g", v)
-	case time.Time:
-		strVal = v.Format(time.RFC3339)
-	case bson.DateTime:
-		strVal = v.Time().Format(time.RFC3339)
-	case bson.Timestamp:
-		strVal = fmt.Sprintf("Timestamp(%d,%d)", v.T, v.I)
-	case bson.ObjectID:
-		strVal = v.Hex()
-	case bson.Binary:
-		strVal = fmt.Sprintf("Binary(subtype:%d,len:%d)", v.Subtype, len(v.Data))
-	case bson.Regex:
-		strVal = fmt.Sprintf("/%s/%s", v.Pattern, v.Options)
-	case bson.DBPointer:
-		strVal = fmt.Sprintf("DBPointer(%s,%s)", v.DB, v.Pointer.Hex())
+		return v, true
 	case bson.JavaScript:
-		strVal = string(v)
+		return string(v), true
 	case bson.Symbol:
-		strVal = string(v)
-	case bson.CodeWithScope:
-		scopeJSON, _ := json.Marshal(v.Scope)
-		strVal = fmt.Sprintf("CodeWithScope(%s, %s)", v.Code, string(scopeJSON))
-	case bson.Decimal128:
-		strVal = v.String()
-	case bson.MinKey:
-		strVal = "MinKey"
-	case bson.MaxKey:
-		strVal = "MaxKey"
-	case bson.Null:
-		strVal = "null"
-	case bson.Undefined:
-		strVal = "undefined"
-	case []any, bson.A:
-		// Convert arrays to JSON
-		data, err := json.Marshal(v)
-		if err != nil {
-			log.WithError(err).WithField("valueType", "array").Warn("Failed to marshal array value to JSON during MongoDB export, using string representation")
-			strVal = fmt.Sprintf("%v", v)
-		} else {
-			strVal = string(data)
-		}
-	case bson.M, map[string]any, bson.D:
-		// Convert documents to JSON
-		data, err := json.Marshal(v)
-		if err != nil {
-			log.WithError(err).WithField("valueType", "document").Warn("Failed to marshal document value to JSON during MongoDB export, using string representation")
-			strVal = fmt.Sprintf("%v", v)
-		} else {
-			strVal = string(data)
-		}
-	case bson.E:
-		// Handle single BSON element
-		strVal = fmt.Sprintf("%s: %v", v.Key, v.Value)
-	default:
-		// Fallback for any other types
-		strVal = fmt.Sprintf("%v", v)
+		return string(v), true
 	}
 
-	// Apply formula injection protection
-	return common.EscapeFormula(strVal)
+	data, err := bson.MarshalExtJSON(bson.D{{Key: "v", Value: val}}, false, false)
+	if err != nil {
+		log.WithError(err).Warn("Failed to marshal MongoDB value to Extended JSON during export, using string representation")
+		return fmt.Sprintf("%v", val), true
+	}
+	rendered := strings.TrimSuffix(strings.TrimPrefix(string(data), `{"v":`), "}")
+
+	var wrapped map[string]string
+	if json.Unmarshal([]byte(rendered), &wrapped) == nil && len(wrapped) == 1 {
+		for _, key := range []string{"$oid", "$date", "$numberDecimal"} {
+			if inner, ok := wrapped[key]; ok {
+				return inner, false
+			}
+		}
+	}
+	return rendered, false
 }

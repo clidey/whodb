@@ -195,7 +195,7 @@ type ConnectionFieldOptionsReader interface {
 // TabularExporter streams rows for one object into a caller-provided writer.
 type TabularExporter interface {
 	// ExportRows writes rows for the provided object reference.
-	ExportRows(ctx context.Context, ref ObjectRef, writer func([]string) error, selectedRows []map[string]any) error
+	ExportRows(ctx context.Context, ref ObjectRef, writer ExportWriter, selection *ExportSelection) error
 }
 
 // NDJSONExporter streams rows for one object as newline-delimited JSON.

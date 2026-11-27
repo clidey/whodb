@@ -172,14 +172,6 @@ func (p *MemcachedPlugin) GetColumnsForTable(config *engine.PluginConfig, schema
 	return memcachedColumns(), nil
 }
 
-// FormatValue converts a value to its string representation.
-func (p *MemcachedPlugin) FormatValue(val any) string {
-	if val == nil {
-		return ""
-	}
-	return fmt.Sprintf("%v", val)
-}
-
 func init() {
 	engine.RegisterPlugin(NewMemcachedPlugin())
 }
