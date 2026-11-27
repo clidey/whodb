@@ -31,7 +31,7 @@
     "node": ">=14"
   },
   "optionalDependencies": {
-    "@clidey/whodb-cli-darwin-arm64": "0.1.0",
+    "@clidey/whodb-cli-darwin-arm64": "0.139.0",
     "@clidey/whodb-cli-darwin-x64": "0.1.0",
     "@clidey/whodb-cli-linux-arm64": "0.1.0",
     "@clidey/whodb-cli-linux-x64": "0.1.0",

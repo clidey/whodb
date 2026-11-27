@@ -9,17 +9,83 @@ importers:
   .:
     optionalDependencies:
       '@clidey/whodb-cli-darwin-arm64':
+        specifier: 0.139.0
+        version: 0.139.0
+      '@clidey/whodb-cli-darwin-x64':
+        specifier: 0.1.0
+        version: 0.1.0
+      '@clidey/whodb-cli-linux-arm':
+        specifier: 0.1.0
+        version: 0.1.0
+      '@clidey/whodb-cli-linux-arm64':
+        specifier: 0.1.0
+        version: 0.1.0
+      '@clidey/whodb-cli-linux-x64':
+        specifier: 0.1.0
+        version: 0.1.0
+      '@clidey/whodb-cli-win32-arm64':
+        specifier: 0.1.0
+        version: 0.1.0
+      '@clidey/whodb-cli-win32-x64':
         specifier: 0.1.0
         version: 0.1.0
 
 packages:
 
-  '@clidey/whodb-cli-darwin-arm64@0.1.0':
-    resolution: {integrity: sha512-Z2d46XGKmmmtVGaWTj1qgpx6o9vGSgo76/hr3eQPCcVUhDfOtX7DmFdNui76ntv6TjKUXsGUj0xFID2Cmffjlg==}
+  '@clidey/whodb-cli-darwin-arm64@0.139.0':
+    resolution: {integrity: sha512-65Yc4cRTEEbJuS8yMkhz9/WvtYvfUQQwVX4dVuk/S47FUW11AATfmrkbgKhTvWgQQd3WCgfrszeKNhJj2TtaeA==}
     cpu: [arm64]
     os: [darwin]
 
+  '@clidey/whodb-cli-darwin-x64@0.1.0':
+    resolution: {integrity: sha512-5RCeys2oEinyKleQs0F333Vj7tJ06cQUwDGcgkiXGRZgxPbdM0YK0435+7bGU2Nsou5HMspKLnqa2Jx8Brpz3w==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@clidey/whodb-cli-linux-arm64@0.1.0':
+    resolution: {integrity: sha512-OoqsD5iTkH5lu12ESh4hKdTt7rk2DPzOgsMbCebtCrHNQ3h9jqIne3p4+e5h6vPpIjbFfRDdZoVH6GdQEUpJZg==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@clidey/whodb-cli-linux-arm@0.1.0':
+    resolution: {integrity: sha512-K6jzv7gcOpfvWYe0rB+PIaKx66Nxl7+3UB/WNdzGaBhoDPl45xdg6tbpmM19zCmMcMs1tlY5PbJp5gq8/OwlnA==}
+    cpu: [arm]
+    os: [linux]
+
+  '@clidey/whodb-cli-linux-x64@0.1.0':
+    resolution: {integrity: sha512-ygfRzs4k7+JiCkl8KKYHFyyLa94DcjOeGeW9htISWKMRTXXUq4kf1WGAO21XWngzaglj+aBvopGexMHdvQs8vQ==}
+    cpu: [x64]
+    os: [linux]
+
+  '@clidey/whodb-cli-win32-arm64@0.1.0':
+    resolution: {integrity: sha512-ZktrvuYpOGU01kcne55X/jdCvdESGbHFIJCcDQOxaPSIktKTPGPc99f4z2UQWD89ugFztolqqBjLPNzP4QLGxg==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@clidey/whodb-cli-win32-x64@0.1.0':
+    resolution: {integrity: sha512-NkDm7vI1pAqxhGEhmVrBgRzksn9jut7pi6bTYdLOP9kC0fF0CA9YV9JUysV8c96vc+pRThRM6i/+/I/r72vOcA==}
+    cpu: [x64]
+    os: [win32]
+
 snapshots:
 
-  '@clidey/whodb-cli-darwin-arm64@0.1.0':
+  '@clidey/whodb-cli-darwin-arm64@0.139.0':
+    optional: true
+
+  '@clidey/whodb-cli-darwin-x64@0.1.0':
+    optional: true
+
+  '@clidey/whodb-cli-linux-arm64@0.1.0':
+    optional: true
+
+  '@clidey/whodb-cli-linux-arm@0.1.0':
+    optional: true
+
+  '@clidey/whodb-cli-linux-x64@0.1.0':
+    optional: true
+
+  '@clidey/whodb-cli-win32-arm64@0.1.0':
+    optional: true
+
+  '@clidey/whodb-cli-win32-x64@0.1.0':
     optional: true
