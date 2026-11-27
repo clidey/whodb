@@ -5,4 +5,4 @@ allowBuilds:
   esbuild: false
 
 minimumReleaseAgeExclude:
-  - '@clidey/dory@1.15.0'
+  - '@clidey/dory@1.16.0'
