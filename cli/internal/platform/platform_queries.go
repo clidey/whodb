@@ -16,6 +16,12 @@ import (
 // It is deliberately not a general GraphQL passthrough: callers can select a
 // known operation, while the CLI owns the query document and field set.
 var platformQuerySpecs = map[string]string{
+	"OAuthSecretProviders": `query CLIOAuthSecretProviders {
+  OAuthSecretProviders { id name category scopes defaultScopes callbackURL documentationURL setupHint expiryOptional scopeOptional renewal }
+}`,
+	"OAuthSecretStatus": `query CLIOAuthSecretStatus($projectId: ID!, $id: ID!) {
+  OAuthSecretStatus(projectId: $projectId, id: $id) { provider state scopes requestedScopes scopesVerified expiresAt lastRenewedAt renewable callbackURL }
+}`,
 	"ValidateOntologyBehaviors": `query CLIValidateOntologyBehaviors($projectId: ID!, $manifest: JSON!) {
   ValidateOntologyBehaviors(projectId: $projectId, manifest: $manifest)
  }`,

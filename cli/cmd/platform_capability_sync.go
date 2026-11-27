@@ -32,7 +32,9 @@ func init() {
 	}{
 		"MySubscription": {usage, "subscription"}, "AvailablePlans": {usage, "plans"}, "PlanFeatures": {usage, "plan-features <plan>"}, "PreviewSubscriptionChange": {usage, "preview-plan <plan> <interval>"},
 		"ListScriptPackages": {scripts, "packages"}, "SearchScriptPackages": {scripts, "search"}, "GetScriptPackage": {scripts, "package <language> <name>"},
-		"EdgeRunners": {edge, "runners"}, "EdgeFunctionRun": {edge, "run <id>"}, "EdgeFunctionRuns": {edge, "runs <function-id>"}, "EdgeSchedules": {edge, "schedules <function-id>"},
+		"OAuthSecretProviders": {secretsCmd, "oauth-providers"},
+		"OAuthSecretStatus":    {secretsCmd, "oauth-status <id>"},
+		"EdgeRunners":          {edge, "runners"}, "EdgeFunctionRun": {edge, "run <id>"}, "EdgeFunctionRuns": {edge, "runs <function-id>"}, "EdgeSchedules": {edge, "schedules <function-id>"},
 		"TransformRun":       {transformsCmd, "get-run <transform-id> <run-id>"},
 		"AppAccessDirectory": {appsCmd, "access <app-id>"}, "ProjectTransformRuns": {transformsCmd, "history"},
 		"AgentSessions": {sessions, "list"}, "AgentSession": {sessions, "get <session-id>"},

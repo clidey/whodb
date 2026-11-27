@@ -10,6 +10,8 @@ type CapabilityRead struct {
 
 // CapabilityReads documents the platform operations added to the automation surface.
 var CapabilityReads = []CapabilityRead{
+	{"OAuthSecretProviders", "oauth_secret_providers", "List managed OAuth providers, approved scope options, callback URLs and renewal policies.", nil},
+	{"OAuthSecretStatus", "oauth_secret_status", "Read an OAuth Secret's state, expiry and last renewal without exposing credentials. Null means the Secret is not OAuth-managed.", []string{"id"}},
 	{"MySubscription", "subscription", "Read the selected organization's current subscription and renewal/cancellation status; does not change billing.", nil},
 	{"AvailablePlans", "plans", "Inspect configured plans, prices and entitlements. Returns a configuration error when billing is unavailable.", nil},
 	{"PlanFeatures", "plan_features", "Inspect the feature grants for one plan key.", []string{"plan"}},

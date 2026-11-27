@@ -200,6 +200,13 @@ func validatePlatformManifestMutation(manifest *platformapi.PlatformManifest, mu
 }
 
 func validatePlatformPayload(key string, payload map[string]any) error {
+	if key == "create:oauth_secret" {
+		for _, field := range []string{"clientSecret", "accessToken", "refreshToken"} {
+			if _, exists := payload[field]; exists {
+				return fmt.Errorf("do not pass OAuth credentials in the payload; configure the MCP server environment")
+			}
+		}
+	}
 	shape, ok := platformapi.PayloadShapes[key]
 	if !ok {
 		return nil

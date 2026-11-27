@@ -23,6 +23,7 @@ import (
 	"fmt"
 	coreaudit "github.com/clidey/whodb/core/src/audit"
 	"io"
+	"maps"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -127,9 +128,13 @@ var platformMutationSpecs = map[string]platformMutationSpec{
 	"ApplyOntologyBehaviors": {Operation: "ApplyOntologyBehaviors", Query: `mutation CLIApplyOntologyBehaviors($projectId: ID!, $manifest: JSON!) {
   ApplyOntologyBehaviors(projectId:$projectId, manifest:$manifest)
  }`},
-	"CreateProject":            mutationSpecWithInput("CreateProject", "CreateProjectInput", projectFields),
-	"RenameProject":            mutationSpecWithDirect("RenameProject", "$id: ID!, $name: String!, $slug: String", "id: $id, name: $name, slug: $slug", projectFields),
-	"DeleteProject":            mutationSpecWithDirect("DeleteProject", "$id: ID!, $orgId: ID, $confirmDeletion: Boolean", "id: $id, orgId: $orgId, confirmDeletion: $confirmDeletion", statusResponseFields),
+	"CreateProject": mutationSpecWithInput("CreateProject", "CreateProjectInput", projectFields),
+	"RenameProject": mutationSpecWithDirect("RenameProject", "$id: ID!, $name: String!, $slug: String", "id: $id, name: $name, slug: $slug", projectFields),
+	"DeleteProject": mutationSpecWithDirect("DeleteProject", "$id: ID!, $orgId: ID, $confirmDeletion: Boolean", "id: $id, orgId: $orgId, confirmDeletion: $confirmDeletion", statusResponseFields),
+	"AuthorizeOAuthSecret": {Operation: "AuthorizeOAuthSecret", Query: `mutation CLIAuthorizeOAuthSecret($projectId: ID!, $id: ID!) {
+  AuthorizeOAuthSecret(projectId: $projectId, id: $id)
+}`},
+	"CreateOAuthSecret":        mutationSpecWithInput("CreateOAuthSecret", "CreateOAuthSecretInput", projectSecretFields),
 	"CreateSecret":             mutationSpecWithInput("CreateSecret", "CreateSecretInput", projectSecretFields),
 	"UpdateSecret":             mutationSpecWithInput("UpdateSecret", "UpdateSecretInput", projectSecretFields),
 	"DeleteSecret":             mutationSpecWithProjectID("DeleteSecret", statusResponseFields),
@@ -452,6 +457,13 @@ func (c *Client) PlatformMutation(ctx context.Context, operation string, variabl
 	if err := ValidatePlatformMutationCapability(c.manifest, operation); err != nil {
 		return nil, err
 	}
+	if operation == "CreateOAuthSecret" {
+		var err error
+		variables, err = oauthSecretCreateVariables(variables)
+		if err != nil {
+			return nil, err
+		}
+	}
 	var resp map[string]json.RawMessage
 	if err := c.graphQL(ctx, spec.Query, variables, &resp); err != nil {
 		return nil, err
@@ -459,6 +471,11 @@ func (c *Client) PlatformMutation(ctx context.Context, operation string, variabl
 	raw, ok := resp[operation]
 	if !ok {
 		return nil, fmt.Errorf("platform returned no %s result", operation)
+	}
+	if operation == "AuthorizeOAuthSecret" {
+		if _, err := OAuthAuthorizationLink(c.host, raw); err != nil {
+			return nil, err
+		}
 	}
 	return &PlatformMutationResult{Operation: operation, Data: raw}, nil
 }
@@ -687,4 +704,27 @@ mutation CLIPlatformUploadProjectFile($projectId: ID!, $folderId: ID, $file: Upl
 		return nil, fmt.Errorf("platform returned no uploaded file")
 	}
 	return envelope.Data.UploadProjectFile, nil
+}
+
+// oauthSecretCreateVariables injects the client secret only at request time.
+// The CLI arguments, MCP confirmation and workflow state carry no credential.
+func oauthSecretCreateVariables(variables map[string]any) (map[string]any, error) {
+	input, ok := variables["input"].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("OAuth Secret input is required")
+	}
+	for key := range input {
+		switch key {
+		case "projectId", "name", "description", "provider", "clientId", "scopes":
+		default:
+			return nil, fmt.Errorf("unsupported OAuth Secret input field")
+		}
+	}
+	secret := os.Getenv("WHODB_OAUTH_CLIENT_SECRET")
+	if secret == "" {
+		return nil, fmt.Errorf("set WHODB_OAUTH_CLIENT_SECRET in the CLI or MCP server environment")
+	}
+	requestInput := maps.Clone(input)
+	requestInput["clientSecret"] = secret
+	return map[string]any{"input": requestInput}, nil
 }

@@ -76,6 +76,9 @@ func handlePlatformCapabilityRead(ctx context.Context, c platformapi.CapabilityR
 	requested := in.Limit
 	if requested == 0 {
 		requested = 20
+		if c.Operation == "OAuthSecretProviders" {
+			requested = 50
+		}
 	}
 	if requested > 1000 {
 		requested = 1000

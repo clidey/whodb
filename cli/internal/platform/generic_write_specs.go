@@ -69,6 +69,8 @@ type PayloadField struct {
 
 // GenericWriteSpecs maps operation/resource tokens to hosted platform mutations.
 var GenericWriteSpecs = map[string]GenericWriteSpec{
+	"action:authorize:oauth_secret":               {Resource: "oauth_secret", Action: "authorize", Mutation: "AuthorizeOAuthSecret", Mode: GenericWriteModeDirect, NeedsID: true, InjectProjectID: true},
+	"create:oauth_secret":                         {Resource: "oauth_secret", Action: "create", Mutation: "CreateOAuthSecret", Mode: GenericWriteModeInput, InjectProjectID: true},
 	"create:secret":                               {Resource: "secret", Action: "create", Mutation: "CreateSecret", Mode: GenericWriteModeInput, InjectProjectID: true},
 	"update:secret":                               {Resource: "secret", Action: "update", Mutation: "UpdateSecret", Mode: GenericWriteModeInput, NeedsID: true, InjectProjectID: true},
 	"delete:secret":                               {Resource: "secret", Action: "delete", Mutation: "DeleteSecret", Mode: GenericWriteModeProjectID, NeedsID: true},
@@ -172,6 +174,22 @@ var GenericWriteSpecs = map[string]GenericWriteSpec{
 
 // PayloadShapes describes payload_json shapes for common hosted platform writes.
 var PayloadShapes = map[string]PayloadShape{
+	"action:authorize:oauth_secret": {
+		Key: "action:authorize:oauth_secret", Resource: "oauth_secret", Action: "authorize",
+		Description: "Start consent for an existing OAuth secret. After confirmation, open the one-time authorization_url in a browser signed in as the same WhoDB user.",
+	},
+	"create:oauth_secret": {
+		Key: "create:oauth_secret", Resource: "oauth_secret", Action: "create",
+		Description: "Create a managed OAuth Secret using WHODB_OAUTH_CLIENT_SECRET from the local process environment. Complete consent in the hosted Secrets page.",
+		Fields: []PayloadField{
+			{Name: "name", Type: "string", Required: true, Description: "Secret name"},
+			{Name: "description", Type: "string", Description: "Optional Secret description"},
+			{Name: "provider", Type: "string", Required: true, Description: "Provider ID from the hosted OAuth provider catalog"},
+			{Name: "clientId", Type: "string", Required: true, Description: "Provider application client ID"},
+			{Name: "scopes", Type: "array", Required: true, Description: "Approved provider scope strings"},
+		},
+		Examples: []string{`{"name":"SOCIAL_LINKEDIN_ACCESS_TOKEN","provider":"linkedin","clientId":"YOUR_CLIENT_ID","scopes":["w_organization_social"]}`},
+	},
 	"create:secret": {
 		Key: "create:secret", Resource: "secret", Action: "create", Description: "Create secret metadata and value. projectId is injected from the selected workspace.",
 		Fields: []PayloadField{

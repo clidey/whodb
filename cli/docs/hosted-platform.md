@@ -97,6 +97,50 @@ whodb sources delete local-postgres        # prompts; --yes skips
 `sources test` also accepts `--type` plus connection flags to test a source
 before saving it.
 
+## OAuth Secrets
+
+List the reviewed providers and get the state, expiry and last renewal of a
+managed Secret by ID:
+
+```sh
+whodb secrets oauth-providers --format json
+whodb secrets oauth-status SECRET_ID --format json
+```
+
+Set `WHODB_OAUTH_CLIENT_SECRET` in the local CLI or stdio MCP process environment
+using your local secret manager. The client secret is read when the approved
+write executes. Keep it out of command arguments, tool payloads and chat.
+
+```sh
+whodb resources create oauth_secret --host app.whodb.com --org clidey --project social-media \
+  --payload-json '{"name":"SOCIAL_LINKEDIN_ACCESS_TOKEN","provider":"linkedin","clientId":"YOUR_CLIENT_ID","scopes":["w_organization_social"]}'
+```
+
+In local stdio MCP, use `whodb_platform_create` with resource `oauth_secret` and
+the same metadata, then review and confirm the write in the default confirmation
+mode. The read tools are `whodb_platform_oauth_secret_providers` and
+`whodb_platform_oauth_secret_status`. Remote MCP supports the reads. Use the
+hosted Secrets page for creation when using remote MCP.
+
+Start provider consent from a terminal:
+
+```sh
+whodb secrets authorize SOCIAL_LINKEDIN_ACCESS_TOKEN --host app.whodb.com --org clidey --project social-media
+```
+
+After confirmation, WhoDB opens your default browser. Sign in as the same WhoDB
+user if prompted, then approve access at the provider. Use `--no-browser` or
+`--format json` to copy the one-time link for use on another machine. The link
+expires after 10 minutes.
+
+In MCP, call `whodb_platform_action` with `resource: "oauth_secret"`, `action:
+"authorize"`, and the secret `id`. After the user approves the preview, pass its
+token to `whodb_platform_confirm` and open the returned `authorization_url`.
+Treat the link as private. Use `oauth-status` to check that consent completed.
+
+On a server without browser handoffs, open the secret in **Secrets** and select
+**Authorize / reconnect**.
+
 ## Automation output
 
 Every hosted command accepts `--format json`. Lifecycle and mutating commands

@@ -367,6 +367,9 @@ func validatePlatformWorkflowInput(input PlatformWorkflowPlanInput, session *pla
 		if !ok {
 			return platformWorkflowPlan{}, fmt.Errorf("step %q uses unsupported platform write %q", id, key)
 		}
+		if spec.Mutation == "AuthorizeOAuthSecret" {
+			return platformWorkflowPlan{}, fmt.Errorf("step %q: OAuth consent requires a direct action and an interactive browser", id)
+		}
 		if spec.Mode == platformapi.GenericWriteModeFileUpload {
 			return platformWorkflowPlan{}, fmt.Errorf("step %q: local file uploads require direct confirmation", id)
 		}

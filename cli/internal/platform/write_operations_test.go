@@ -166,3 +166,30 @@ func TestUploadProjectFilePostsMultipartGraphQL(t *testing.T) {
 		t.Fatalf("uploaded file = %#v, want decoded file", file)
 	}
 }
+
+func TestOAuthSecretCreateReadsCredentialOnlyAtExecution(t *testing.T) {
+	input := map[string]any{
+		"projectId": "project", "name": "LINKEDIN", "provider": "linkedin",
+		"clientId": "client", "scopes": []string{"w_organization_social"},
+	}
+	variables := map[string]any{"input": input}
+	t.Setenv("WHODB_OAUTH_CLIENT_SECRET", "")
+	if _, err := oauthSecretCreateVariables(variables); err == nil {
+		t.Fatal("creation must fail when the local credential is unset")
+	}
+	t.Setenv("WHODB_OAUTH_CLIENT_SECRET", "local-test-credential")
+	body, err := oauthSecretCreateVariables(variables)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if body["input"].(map[string]any)["clientSecret"] != "local-test-credential" {
+		t.Fatal("provider request is missing the credential")
+	}
+	if _, exists := input["clientSecret"]; exists {
+		t.Fatal("credential leaked into the confirmation payload")
+	}
+	input["clientSecret"] = "inline-test-credential"
+	if _, err := oauthSecretCreateVariables(variables); err == nil {
+		t.Fatal("inline client credentials must be rejected")
+	}
+}

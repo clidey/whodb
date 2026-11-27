@@ -181,7 +181,11 @@ func (f *fakePlatformClient) DeleteSource(ctx context.Context, orgID, projectID,
 func (f *fakePlatformClient) PlatformMutation(ctx context.Context, operation string, variables map[string]any) (*platformapi.PlatformMutationResult, error) {
 	f.mutationName = operation
 	f.mutationVariables = variables
-	return &platformapi.PlatformMutationResult{Operation: operation, Data: json.RawMessage(`{"id":"result-1","name":"Result"}`)}, nil
+	result := json.RawMessage(`{"id":"result-1","name":"Result"}`)
+	if operation == "AuthorizeOAuthSecret" {
+		result = json.RawMessage(`"https://app.whodb.com/api/secrets/oauth/handoff?state=Zm9v"`)
+	}
+	return &platformapi.PlatformMutationResult{Operation: operation, Data: result}, nil
 }
 
 func (f *fakePlatformClient) UploadProjectFile(ctx context.Context, projectID string, folderID *string, filePath string) (*platformapi.ProjectFile, error) {
@@ -236,8 +240,8 @@ func testPlatformSession(client platformClient) *platformToolSession {
 
 func TestPlatformToolDefinitions(t *testing.T) {
 	tools := platformToolDefinitions()
-	if len(tools) != 183 {
-		t.Fatalf("len(platformToolDefinitions()) = %d, want 183", len(tools))
+	if len(tools) != 185 {
+		t.Fatalf("len(platformToolDefinitions()) = %d, want 185", len(tools))
 	}
 	for _, tool := range tools {
 		if tool.Annotations == nil {
@@ -586,6 +590,40 @@ func TestHandlePlatformSourceDeleteAllowWriteExecutesImmediately(t *testing.T) {
 	}
 	if output.Status != "ok" || client.deletedSourceID != "src-1" {
 		t.Fatalf("output/client = %#v deleted=%q, want immediate delete", output, client.deletedSourceID)
+	}
+}
+
+func TestOAuthConsentRequiresConfirmationAndReturnsOneTimeLink(t *testing.T) {
+	client := &fakePlatformClient{}
+	withPlatformSessionLoader(t, func(context.Context) (*platformToolSession, error) {
+		return testPlatformSession(client), nil
+	})
+	ctx := context.Background()
+	input := PlatformGenericWriteInput{Resource: "oauth_secret", Action: "authorize", ID: "secret-1"}
+	_, preview, err := handlePlatformGenericWrite(ctx, "whodb_platform_action", input, "action", true)
+	if err != nil || preview.Error != "" || !preview.ConfirmationRequired || preview.AuthorizationURL != "" || client.mutationName != "" {
+		t.Fatalf("OAuth authorization ran before confirmation: %#v, %v", preview, err)
+	}
+	if preview.ConfirmationPreview == nil || !strings.Contains(preview.ConfirmationPreview.Summary, "secret-1") {
+		t.Fatal("OAuth authorization preview did not identify the secret")
+	}
+	action := &PendingPlatformAction{
+		Operation: "AuthorizeOAuthSecret", Mutation: "AuthorizeOAuthSecret",
+		Resource: "oauth_secret", Action: "authorize", Host: "https://app.whodb.com",
+		OrgID: "org-1", ProjectID: "proj-1", Variables: map[string]any{"id": "secret-1", "projectId": "proj-1"},
+	}
+	confirmed, err := executePendingPlatformAction(ctx, action, "oauth-test")
+	if err != nil || len(confirmed.Columns) != 1 || confirmed.Columns[0] != "authorization_url" ||
+		len(confirmed.Rows) != 1 || confirmed.Rows[0][0] != "https://app.whodb.com/api/secrets/oauth/handoff?state=Zm9v" {
+		t.Fatalf("no usable OAuth authorization link: %#v, %v", confirmed, err)
+	}
+	if client.mutationName != "AuthorizeOAuthSecret" || client.mutationVariables["projectId"] != "proj-1" || client.mutationVariables["id"] != "secret-1" {
+		t.Fatalf("OAuth authorization targeted the wrong secret: %#v", client.mutationVariables)
+	}
+	input.IdempotencyKey = "old-consent-attempt"
+	_, rejected, err := handlePlatformGenericWrite(ctx, "whodb_platform_action", input, "action", true)
+	if err != nil || !strings.Contains(rejected.Error, "one-time URL") {
+		t.Fatalf("OAuth authorization allowed idempotency replay: %#v, %v", rejected, err)
 	}
 }
 

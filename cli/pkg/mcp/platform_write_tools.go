@@ -114,6 +114,7 @@ type PlatformGenericWriteOutput struct {
 	Status               string                  `json:"status,omitempty"`
 	IdempotencyReplayed  bool                    `json:"idempotency_replayed,omitempty"`
 	ResultJSON           string                  `json:"result_json,omitempty"`
+	AuthorizationURL     string                  `json:"authorization_url,omitempty"`
 	Error                string                  `json:"error,omitempty"`
 	ErrorCode            string                  `json:"error_code,omitempty"`
 	Retryable            bool                    `json:"retryable,omitempty"`
@@ -595,6 +596,9 @@ func buildPlatformGenericWrite(session *platformToolSession, input PlatformGener
 }
 
 func validatePlatformWriteCapability(ctx context.Context, session *platformToolSession, spec platformapi.GenericWriteSpec) error {
+	if platformRuntimeFromContext(ctx) != nil && spec.Mutation == "CreateOAuthSecret" {
+		return fmt.Errorf("OAuth Secret creation requires local CLI or stdio MCP; use the hosted Secrets page with remote MCP")
+	}
 	if platformRuntimeFromContext(ctx) != nil && spec.Mode == platformapi.GenericWriteModeFileUpload {
 		return fmt.Errorf("local file paths are unavailable over remote MCP; upload through the application or import inline bundle content")
 	}
@@ -609,6 +613,9 @@ func validatePlatformWriteCapability(ctx context.Context, session *platformToolS
 }
 
 func validatePlatformWriteInput(input PlatformGenericWriteInput, operationKind string, spec platformapi.GenericWriteSpec) error {
+	if spec.Mutation == "AuthorizeOAuthSecret" && strings.TrimSpace(input.IdempotencyKey) != "" {
+		return errors.New("OAuth consent uses a fresh, one-time URL and does not accept idempotency_key")
+	}
 	payload, err := parsePlatformWritePayload(input.Payload, input.PayloadJSON)
 	if err != nil {
 		return err
@@ -633,6 +640,9 @@ func addPlatformConfirmDeletionVariable(mutation string, variables map[string]an
 }
 
 func executePlatformMutation(ctx context.Context, client platformClient, mutation, projectID string, variables map[string]any) (*platformapi.PlatformMutationResult, error) {
+	if platformRuntimeFromContext(ctx) != nil && mutation == "CreateOAuthSecret" {
+		return nil, fmt.Errorf("OAuth Secret creation requires local CLI or stdio MCP; use the hosted Secrets page with remote MCP")
+	}
 	if mutation != "UploadProjectFile" {
 		return client.PlatformMutation(ctx, mutation, variables)
 	}
@@ -733,6 +743,8 @@ func platformGenericWriteSummary(spec platformapi.GenericWriteSpec, payload map[
 		details = input
 	}
 	switch spec.Mutation {
+	case "AuthorizeOAuthSecret":
+		return fmt.Sprintf("Start OAuth consent for secret %q", firstPayloadString(details, "id", ""))
 	case "PromoteFileToDataset":
 		if name := firstPayloadString(details, "datasetName", ""); name != "" {
 			return fmt.Sprintf("Promote file to dataset %q", name)
@@ -789,14 +801,19 @@ func platformGenericWriteCompletedOutput(requestID, mutation string, result *pla
 		RequestID:           requestID,
 	}
 	if result != nil {
-		output.ResultJSON = string(result.Data)
+		if mutation == "AuthorizeOAuthSecret" {
+			_ = json.Unmarshal(result.Data, &output.AuthorizationURL)
+		} else {
+			output.ResultJSON = string(result.Data)
+		}
 	}
 	return output
 }
 
 const descPlatformCreate = `Create a hosted platform resource through the selected project.
 
-Supported resources: secret, ai_provider, ontology, ontology_fast_lookup, ontology_reference, dataset, transform, folder, function, app, package, lineage_provider, source_object.
+Supported resources: secret, oauth_secret, ai_provider, ontology, ontology_fast_lookup, ontology_reference, dataset, transform, folder, function, app, package, lineage_provider, source_object.
+For oauth_secret, pass name, provider, clientId and scopes. Local stdio MCP reads WHODB_OAUTH_CLIENT_SECRET from its process environment. Remote MCP does not support this write. Do not pass credentials in the tool payload. To authorize an existing OAuth secret, use whodb_platform_action with action authorize and resource oauth_secret.
 Pass payload_json as a JSON object matching the hosted platform mutation input. The selected projectId is injected automatically when applicable.
 Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
 
@@ -816,7 +833,8 @@ const descPlatformAction = `Run a hosted platform resource action through the se
 
 Supported actions include transform run/cancel_run, file upload/rename/move/promote_to_dataset/restore/purge, folder rename/move/restore/purge, function deploy/redeploy/execute/start_run/generate_test_input, function_run cancel, ontology add_records/execute_behavior/share/unshare/reembed/purge_data, dataset purge_data, project restore/purge, app restore/purge/generate/cancel_generation/file operations, object restore/purge/version restore, package installation and add_changelog/add_media/review, and organization administration including service accounts (create_service_account, create_service_account_key, revoke_service_account_key, delete_service_account) and teams. Read whodb://platform/schema for every action and its payload shape.
 Some actions create, move, deploy, or otherwise mutate hosted resources. Pass id and payload_json as required by the action. For file/upload, payload_json requires file_path and may include folderId.
-Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.`
+Default mode returns a confirmation token; do not call whodb_platform_confirm until the user approves the preview. Permission checks are enforced by the hosted platform.
+For OAuth consent, call with resource oauth_secret, action authorize, and its secret id. After confirmation, present the one-time authorization_url for the user to open in a browser signed in as the same WhoDB user. Treat it as private and do not fetch it on their behalf.`
 
 const descPlatformCreateDataset = `Create a hosted dataset through the selected project.
 

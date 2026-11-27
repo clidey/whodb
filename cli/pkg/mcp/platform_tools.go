@@ -2638,6 +2638,18 @@ func executePendingPlatformAction(ctx context.Context, action *PendingPlatformAc
 		if err != nil {
 			return ConfirmOutput{}, err
 		}
+		if action.Mutation == "AuthorizeOAuthSecret" {
+			var link string
+			if result == nil || json.Unmarshal(result.Data, &link) != nil || link == "" {
+				return ConfirmOutput{}, errors.New("platform returned no OAuth browser handoff")
+			}
+			return ConfirmOutput{
+				Columns:   []string{"authorization_url"},
+				Rows:      [][]any{{link}},
+				Message:   "Open the one-time authorization link in a browser signed in as the same WhoDB user.",
+				RequestID: requestID,
+			}, nil
+		}
 		if platformRuntimeFromContext(ctx) == nil {
 			updateSavedPlatformProjectAfterMutation(action, result)
 		}
