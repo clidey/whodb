@@ -168,3 +168,21 @@ func TestResolveLocalURL(t *testing.T) {
 		t.Fatalf("port and path not preserved: %q", got)
 	}
 }
+
+func TestEscapeFormulaKeepsNumbers(t *testing.T) {
+	for value, want := range map[string]string{
+		"-1200.5":                "-1200.5",
+		"-3":                     "-3",
+		"+15":                    "+15",
+		"-Refund note":           "'-Refund note",
+		"-2+3+cmd|' /C calc'!A0": "'-2+3+cmd|' /C calc'!A0",
+		"=1+1":                   "'=1+1",
+		"-Inf":                   "'-Inf",
+		"-0x1p-2":                "'-0x1p-2",
+		"-1_000":                 "'-1_000",
+	} {
+		if got := EscapeFormula(value); got != want {
+			t.Errorf("EscapeFormula(%q) = %q, want %q", value, got, want)
+		}
+	}
+}
