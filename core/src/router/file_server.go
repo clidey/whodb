@@ -20,6 +20,7 @@ import (
 	"crypto/sha256"
 	"embed"
 	"encoding/hex"
+	"errors"
 	"io"
 	"io/fs"
 	"net/http"
@@ -82,13 +83,16 @@ func newStaticFileHandler(staticFS fs.FS, baseHref string) http.Handler {
 	server := http.FileServer(http.FS(staticFS))
 	var etags sync.Map
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Cache headers are only set for existing files so a 404 for a not-yet-deployed
-		// hashed asset is never cached by browsers or the CDN.
-		etag, exists := staticFileETag(staticFS, &etags, r.URL.Path)
-		if exists || isAssetRequest(r.URL.Path) {
-			if exists {
+		etag, err := staticFileETag(staticFS, &etags, r.URL.Path)
+		if err == nil || isAssetRequest(r.URL.Path) {
+			if err == nil {
 				w.Header().Set("Cache-Control", staticCacheControl(r.URL.Path))
 				w.Header().Set("ETag", etag)
+			} else if isHashedAsset(r.URL.Path) && errors.Is(err, fs.ErrNotExist) {
+				// A different replica may already serve this asset during a rollout.
+				w.Header().Set("Cache-Control", "no-store")
+				http.NotFound(w, r)
+				return
 			}
 			server.ServeHTTP(w, r)
 		} else {
@@ -175,17 +179,17 @@ func staticCacheControl(urlPath string) string {
 // staticFileETag returns a content-based weak ETag for a static file, caching it per path.
 // Embedded files have no modification time, so without an ETag browsers cannot revalidate
 // them and re-download the full file. The ETag is weak because responses may be compressed.
-func staticFileETag(staticFS fs.FS, cache *sync.Map, urlPath string) (string, bool) {
+func staticFileETag(staticFS fs.FS, cache *sync.Map, urlPath string) (string, error) {
 	name := strings.TrimPrefix(path.Clean("/"+urlPath), "/")
 	if cached, ok := cache.Load(name); ok {
-		return cached.(string), true
+		return cached.(string), nil
 	}
 	data, err := fs.ReadFile(staticFS, name)
 	if err != nil {
-		return "", false
+		return "", err
 	}
 	sum := sha256.Sum256(data)
 	etag := `W/"` + hex.EncodeToString(sum[:16]) + `"`
 	cache.Store(name, etag)
-	return etag, true
+	return etag, nil
 }

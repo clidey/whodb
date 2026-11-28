@@ -109,7 +109,7 @@ func TestStaticFileHandlerCacheHeaders(t *testing.T) {
 	}
 }
 
-func TestStaticFileHandlerMissingFileHasNoCacheHeaders(t *testing.T) {
+func TestStaticFileHandlerMissingHashedAssetUsesNoStore(t *testing.T) {
 	handler := newStaticFileHandler(fstest.MapFS{"index.html": {Data: []byte("<html></html>")}}, "/")
 
 	rr := httptest.NewRecorder()
@@ -117,8 +117,8 @@ func TestStaticFileHandlerMissingFileHasNoCacheHeaders(t *testing.T) {
 	if rr.Code != http.StatusNotFound {
 		t.Fatalf("expected 404, got %d", rr.Code)
 	}
-	if got := rr.Header().Get("Cache-Control"); got != "" {
-		t.Fatalf("expected no Cache-Control on a missing asset, got %q", got)
+	if got := rr.Header().Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("expected Cache-Control no-store on a missing asset, got %q", got)
 	}
 }
 
